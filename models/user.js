@@ -163,12 +163,12 @@ class User {
         FROM messages AS m
         JOIN users AS u 
         ON m.from_username = u.username
-        WHERE from_username = $1`,
+        WHERE to_username = $1`,
       [username]);
 
       return result.rows.map(m => ({ //mapping table element of preferred JSON format
         id: m.id,
-        to_user: {
+        from_user: {
           username: m.from_username,
           first_name: m.first_name,
           last_name: m.last_name,
