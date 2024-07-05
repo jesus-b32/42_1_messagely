@@ -1,3 +1,11 @@
+const Router = require("express").Router;
+const router = new Router();
+
+const Message = require('../models/message');
+const {ensureLoggedIn} = require("../middleware/auth");
+const ExpressError = require("../expressError");
+
+
 /** GET /:id - get detail of message.
  *
  * => {message: {id,
@@ -10,6 +18,20 @@
  * Make sure that the currently-logged-in users is either the to or from user.
  *
  **/
+router.get('/:id', ensureLoggedIn, async function (req, res, next) {
+    try {
+        const message = await Message.get(req.params.id);
+        const username = req.user.username;
+
+        if (message.from_user.username !== username && message.to_user.username !== username) {
+            throw new ExpressError('Only the sender or recipient of this message can view it.', 401);
+        }
+        return res.json({ message });
+
+    } catch (err) {
+        next (err);
+    }
+})
 
 
 /** POST / - post message.
@@ -18,6 +40,20 @@
  *   {message: {id, from_username, to_username, body, sent_at}}
  *
  **/
+router.post('/', ensureLoggedIn, async function (req, res, next) {
+    try {
+        const { to_username, body } = req.body;
+        const from_username = req.user.username;
+
+        const message = await Message.create({from_username, to_username, body});
+
+        return res.json({ message });
+
+    } catch (err) {
+        next (err);
+    }
+})
+
 
 
 /** POST/:id/read - mark message as read:
@@ -27,4 +63,22 @@
  * Make sure that the only the intended recipient can mark as read.
  *
  **/
+router.post('/:id/read', ensureLoggedIn, async function (req, res, next) {
+    try {
+        const msg = await Message.get(req.params.id);
+        const username = req.user.username;
+    
+        if (msg.to_user.username !== username) {
+            throw new ExpressError("Only the intended recipient can mark this message as read", 401);
+        }
+        const message = await Message.markRead(req.params.id);
 
+        return res.json({ message });
+
+    } catch (err) {
+        next (err);
+    }
+})
+
+
+module.exports = router;
