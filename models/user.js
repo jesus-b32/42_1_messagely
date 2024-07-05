@@ -44,13 +44,6 @@ class User {
     const user = result.rows[0];
 
     return user && await bcrypt.compare(password, user.password);
-
-    // if (user) {
-    //   if (await bcrypt.compare(password, user.password)) {
-    //     return result.json({message: 'Logged in'});
-    //   }
-    // }
-    // throw new ExpressError('Invalid username/password', 400);
   }
 
   /** Update last_login_at for user */
